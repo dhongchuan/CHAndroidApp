@@ -21,8 +21,10 @@
         <activity
             android:name=".activitys.CameraActivity"
             android:label="@string/app_name"
-            android:screenOrientation="landscape">
-        </activity>
+            android:screenOrientation="landscape"></activity>
+
+        <activity android:name=".activitys.CustomLinearLayoutActivity"
+            android:screenOrientation="portrait"></activity>
     </application>
 
 </manifest>

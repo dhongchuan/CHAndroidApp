@@ -1,16 +1,11 @@
 package com.dhongchuan.chapplication.activitys;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 
 import com.dhongchuan.chapplication.R;
+import com.dhongchuan.chapplication.base.BaseFragmentActivity;
 import com.dhongchuan.chapplication.fragments.ComponentListFragment;
 
 

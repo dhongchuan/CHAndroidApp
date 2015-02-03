@@ -9,6 +9,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.dhongchuan.chapplication.activitys.CameraActivity;
+import com.dhongchuan.chapplication.activitys.CustomLinearLayoutActivity;
 
 import java.util.ArrayList;
 
@@ -27,6 +28,7 @@ public class ComponentListFragment extends ListFragment {
     private void init(){
         mArrComponent = new ArrayList<String>();
         mArrComponent.add("相机");
+        mArrComponent.add("自定义滑动LinearLayout");
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, mArrComponent);
         setListAdapter(adapter);
@@ -34,11 +36,15 @@ public class ComponentListFragment extends ListFragment {
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
+        Intent i = null;
         switch (position){
             case 0:
-                Intent i = new Intent(getActivity(), CameraActivity.class);
-                startActivity(i);
+                i = new Intent(getActivity(), CameraActivity.class);
+                break;
+            case 1:
+                i = new Intent(getActivity(), CustomLinearLayoutActivity.class);
                 break;
         }
+        startActivity(i);
     }
 }

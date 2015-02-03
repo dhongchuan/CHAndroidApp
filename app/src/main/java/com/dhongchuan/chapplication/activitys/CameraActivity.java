@@ -3,6 +3,7 @@ package com.dhongchuan.chapplication.activitys;
 import android.app.Fragment;
 import android.os.Bundle;
 
+import com.dhongchuan.chapplication.base.BaseFragmentActivity;
 import com.dhongchuan.chapplication.fragments.CameraFragment;
 
 /**
