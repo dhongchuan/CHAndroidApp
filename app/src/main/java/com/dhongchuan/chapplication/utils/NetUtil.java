@@ -3,6 +3,7 @@ package com.dhongchuan.chapplication.utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -13,10 +14,13 @@ import javax.net.ssl.HttpsURLConnection;
  */
 public class NetUtil {
     public static byte[] getFileBytesByUrl(String strUrl){
-        HttpsURLConnection httpConnection = null;
+        HttpURLConnection httpConnection = null;
         try {
             URL url = new URL(strUrl);
-            httpConnection = (HttpsURLConnection) url.openConnection();
+            httpConnection = (HttpURLConnection) url.openConnection();
+            httpConnection.setConnectTimeout(30000);
+            httpConnection.setReadTimeout(30000);
+            httpConnection.setInstanceFollowRedirects(true);
 
             ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
             InputStream inStream = httpConnection.getInputStream();

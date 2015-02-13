@@ -5,7 +5,7 @@ package com.dhongchuan.chapplication.base;
  */
 public interface ICache<K, V> {
     public void set(K key, V value);
-    public V get(K key, V value);
+    public V get(K key);
     public void delete(K key);
     public void deleteAll();
 }

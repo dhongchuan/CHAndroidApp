@@ -7,8 +7,10 @@ import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.dhongchuan.chapplication.R;
+import com.dhongchuan.chapplication.services.ImageLoader;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -19,11 +21,15 @@ import com.dhongchuan.chapplication.R;
  * create an instance of this fragment.
  */
 public class CustomLinearLayoutFragment extends Fragment {
+    String url = "http://c2.hoopchina.com.cn/uploads/star/event/images/150212/bmiddle-4c6852698d93bb8cce7199a2a8cefff01aec988b.jpg";
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_custom_linear_layout, container, false);
+        View view = inflater.inflate(R.layout.fragment_custom_linear_layout, container, false);
+        ImageView imageView = (ImageView) view.findViewById(R.id.image_view);
+        ImageLoader.with(getActivity().getApplicationContext()).load(imageView, url);
+        return view;
     }
 
 }
