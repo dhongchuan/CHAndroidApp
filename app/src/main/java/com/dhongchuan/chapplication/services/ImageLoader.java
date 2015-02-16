@@ -34,7 +34,7 @@ public class ImageLoader extends HandlerThread{
     private Object mLock;
     private Handler mHandleRequest;
     private Handler mHandleCompleteResult;
-    private ICache mFileCache;
+    private FileCache mFileCache;
     private LIFOThreadPoolProcessor mDownloadProcessor;
     private ConcurrentHashMap<Integer, ImageView> mDestViews;
     private ConcurrentHashMap<ImageView, String> mDestViewsUrlMap;
@@ -115,6 +115,7 @@ public class ImageLoader extends HandlerThread{
                     downloadDataFromNet(key, view, url);
                 }else{
                     Log.d("cacheData", String.valueOf(cacheData.length));
+
                     Message completeMsg = mHandleCompleteResult.obtainMessage();
                     Bundle data = new Bundle();
                     data.putByteArray(IMAGE_VIEW_DATA_PROMPT, cacheData);
@@ -133,6 +134,7 @@ public class ImageLoader extends HandlerThread{
                 String url = data.getString(IMAGE_VIEW_URL_PROMPT);
                 byte[] bytes = data.getByteArray(IMAGE_VIEW_DATA_PROMPT);
                 showImage(id, url,bytes);
+                saveDataToFileCache(url, bytes);
             }
         };
     }
@@ -145,26 +147,28 @@ public class ImageLoader extends HandlerThread{
     }
 
     private void showImage(int imageID, String lastUrl, byte[] data){
-        final Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+//        final Bitmap bitmap = mFileCache.get(lastUrl);
         final ImageView view = mDestViews.get(imageID);
 //        Future future = mDestTaskMap.get(view);
         String currentUrl = mDestViewsUrlMap.get(view);
-        if(currentUrl.equals(lastUrl)){
+        if(currentUrl != null && currentUrl.equals(lastUrl)){
             view.post(new Runnable() {
                 @Override
                 public void run() {
-                    view.setImageBitmap(bitmap);
+//                    view.setImageBitmap(bitmap);
                 }
             });
         }
-        mFileCache.set(currentUrl,data);
-        Log.d("showImage", "ok");
         removeData(imageID, view);
     }
     private void removeData(int ID, ImageView view) {
         mDestViews.remove(ID);
         mDestTaskMap.remove(view);
         mDestViewsUrlMap.remove(view);
+    }
+
+    private void saveDataToFileCache(String url, byte[] data){
+        mFileCache.set(url, data);
     }
 
     private  byte[] getDataFromFileCache(String url){

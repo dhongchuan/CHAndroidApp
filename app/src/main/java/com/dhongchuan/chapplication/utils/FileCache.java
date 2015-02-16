@@ -2,6 +2,8 @@ package com.dhongchuan.chapplication.utils;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import com.dhongchuan.chapplication.base.ICache;
 
@@ -11,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Created by dhongchuan on 15/2/11.
@@ -18,9 +21,11 @@ import java.io.IOException;
 public class FileCache implements ICache<String, byte[]> {
     private static FileCache sFileCache;
     private File mCache;
+    private Context mContext;
 
     private FileCache(Context context){
         mCache = getCacheDir(context);
+        mContext = context;
     }
 
     public static FileCache obtain(Context context){
@@ -49,32 +54,31 @@ public class FileCache implements ICache<String, byte[]> {
     public void set(String key, byte[] value) {
         FileOutputStream fileOutPutStream = null;
         File file;
-        String fileName = String.valueOf(key.hashCode());
+        String fileName = String.valueOf(key.hashCode())+".jpg";
         try {
             file = new File(mCache, fileName);
+            if(!file.exists()){
+                file.createNewFile();
+            }
             fileOutPutStream = new FileOutputStream(file);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             return;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
         }
 
-        byte[] buffer = value;
-        int len = 0;
-        int count = 0;
-        int downloadFileSize;
-        do {
-            len = buffer.length;
-            if (len <= 0)
-                break;
-            try {
-                fileOutPutStream.write(buffer, 0, len);
-                fileOutPutStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-                break;
-            }
-
-        } while (true);
+        byte[] buffer= value;
+        int len = buffer.length;
+        if (len <= 0)
+            return;
+        try {
+            fileOutPutStream.write(buffer, 0, len);
+            fileOutPutStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -110,11 +114,16 @@ public class FileCache implements ICache<String, byte[]> {
 
     }
 
+    public Bitmap getBitmap(String url){
+        Bitmap bitmap = BitmapFactory.decodeFile(getPath(url));
+        return bitmap;
+    }
+
     private File getFile(String url){
         String path = getPath(url);
         return new File(path);
     }
     private String getPath(String url){
-        return new StringBuilder(mCache.getAbsolutePath()).append("/").append(url).toString();
+        return new StringBuilder(mCache.getAbsolutePath()).append("/").append(url.hashCode()).append(".jpg").toString();
     }
 }
