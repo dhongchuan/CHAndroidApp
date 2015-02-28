@@ -3,8 +3,6 @@ package com.dhongchuan.chapplication.services;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -12,24 +10,22 @@ import android.os.Message;
 import android.util.Log;
 import android.widget.ImageView;
 
-import com.dhongchuan.chapplication.R;
-import com.dhongchuan.chapplication.base.ICache;
 import com.dhongchuan.chapplication.utils.FileCache;
 
-import java.io.File;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 /**
  * Created by dhongchuan on 15/2/11.
  */
-public class ImageLoader extends HandlerThread{
+public class ImageLoaderService extends HandlerThread{
     private static final String NAME = "image_load";
     private static final String IMAGE_VIEW_ID_PROMPT = "image_view_id";
     private static final String IMAGE_VIEW_URL_PROMPT = "image_view_url";
     private static final String IMAGE_VIEW_DATA_PROMPT = "image_view_data";
-    private static ImageLoader sImageLoader;
+    private static ImageLoaderService sImageLoaderService;
+    private static Handler sHandler;
+
 
     private Object mLock;
     private Handler mHandleRequest;
@@ -41,7 +37,7 @@ public class ImageLoader extends HandlerThread{
     private ConcurrentHashMap<ImageView, Future> mDestTaskMap;
     private DownloadImageTask.onCompleteListener mDownloadCompleteListener;
 
-    private ImageLoader(Context context) {
+    public ImageLoaderService(Context context) {
         super(NAME);
         mLock = new Object();
         mDownloadProcessor = new LIFOThreadPoolProcessor(5);
@@ -66,39 +62,33 @@ public class ImageLoader extends HandlerThread{
         };
     }
 
-    public static ImageLoader with(Context context){
-        if(sImageLoader == null){
-            sImageLoader = new ImageLoader(context);
-            sImageLoader.start();
-            sImageLoader.getLooper();
-        }
-        return sImageLoader;
-    }
-
-    public void load(ImageView view, String strUrl){
-        int id = view.hashCode();
-        Log.d("id", String.valueOf(id));
-        mDestViewsUrlMap.put(view, strUrl);
-        mDestViews.put(id, view);
-        if(mHandleRequest == null){
-            Log.d("mHandleRequest", "null");
-            mHandleRequest = new Handler(){
+    public static ImageLoaderService with(Context context){
+        if(sImageLoaderService == null){
+            sImageLoaderService = new ImageLoaderService(context);
+            sImageLoaderService.start();
+            sHandler = new Handler(sImageLoaderService.getLooper()){
                 @Override
                 public void handleMessage(Message msg) {
-                    int key = (Integer) msg.obj;//imageView's HashCode
-                    ImageView view = mDestViews.get(key);//get ImageView
-                    String url = mDestViewsUrlMap.get(view);//get url
-                    DownloadImageTask downloadImageTask = new DownloadImageTask(key, url);//create task
-                    downloadImageTask.setCompleteListener(mDownloadCompleteListener);
-                    Future future = mDownloadProcessor.submitTask(downloadImageTask);
-                    Log.d("future", String.valueOf(future.hashCode()));
-                    mDestTaskMap.put(view, future);//
-//                msg.recycle();
+                    if(sImageLoaderService.getHandleRequest() == null){
+                        Log.d("sImageLoaderThread.getHandleRequest()", "null");
+                    }
+                    sImageLoaderService.getHandleRequest().obtainMessage(msg.what).sendToTarget();
                 }
             };
         }
+        return sImageLoaderService;
+    }
 
-        mHandleRequest.obtainMessage(id, id).sendToTarget();
+    public void load(ImageView view, String strUrl){
+        int viewCode = view.hashCode();
+        mDestViewsUrlMap.put(view, strUrl);
+        mDestViews.put(viewCode, view);
+        sHandler.obtainMessage(viewCode).sendToTarget();
+//        mHandleRequest.obtainMessage(viewCode, viewCode).sendToTarget();
+    }
+
+    private Handler getHandleRequest(){
+        return mHandleRequest;
     }
 
     @Override
@@ -106,7 +96,8 @@ public class ImageLoader extends HandlerThread{
         mHandleRequest = new Handler(){
             @Override
             public void handleMessage(Message msg) {
-                int key = (Integer) msg.obj;//imageView's HashCode
+                Log.d("onLooperPrepared", "create");
+                int key = (Integer) msg.what;//imageView's HashCode
                 ImageView view = mDestViews.get(key);//get ImageView
                 String url = mDestViewsUrlMap.get(view);//get url
 
@@ -114,15 +105,13 @@ public class ImageLoader extends HandlerThread{
                 if(cacheData == null || cacheData.length == 0){
                     downloadDataFromNet(key, view, url);
                 }else{
-                    Log.d("cacheData", String.valueOf(cacheData.length));
-
                     Message completeMsg = mHandleCompleteResult.obtainMessage();
                     Bundle data = new Bundle();
                     data.putByteArray(IMAGE_VIEW_DATA_PROMPT, cacheData);
                     data.putInt(IMAGE_VIEW_ID_PROMPT, key);
                     data.putString(IMAGE_VIEW_URL_PROMPT, url);
                     completeMsg.setData(data);
-                    completeMsg.sendToTarget();
+                    mHandleCompleteResult.sendMessage(completeMsg);
                 }
             }
         };
@@ -147,19 +136,23 @@ public class ImageLoader extends HandlerThread{
     }
 
     private void showImage(int imageID, String lastUrl, byte[] data){
-//        final Bitmap bitmap = mFileCache.get(lastUrl);
         final ImageView view = mDestViews.get(imageID);
-//        Future future = mDestTaskMap.get(view);
         String currentUrl = mDestViewsUrlMap.get(view);
+        final Bitmap bitmap = convertBytesToBitmap(data);
         if(currentUrl != null && currentUrl.equals(lastUrl)){
             view.post(new Runnable() {
                 @Override
                 public void run() {
-//                    view.setImageBitmap(bitmap);
+                    view.setImageBitmap(bitmap);
                 }
             });
         }
         removeData(imageID, view);
+    }
+
+    private Bitmap convertBytesToBitmap(byte[] srcData){
+        Bitmap destBitmap = BitmapFactory.decodeByteArray(srcData,0, srcData.length);
+        return destBitmap;
     }
     private void removeData(int ID, ImageView view) {
         mDestViews.remove(ID);

@@ -75,6 +75,6 @@ public class CustomLinearLayout extends LinearLayout {
     }
 
     private boolean isInterceptTouchEvent(){
-        return true;
+        return false;
     }
 }
